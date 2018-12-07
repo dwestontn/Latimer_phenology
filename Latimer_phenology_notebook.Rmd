@@ -1,0 +1,133 @@
+---
+title: "Latimer_phenology_notebook"
+author: "Data collected by John Latimer<br/>data annotated by xxxxx <br/> code contributions by David J. Weston<br/>Travis Lawrence"
+date: "12/01/2018"
+output:
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    toc: yes
+---
+
+# Introduction
+The goal of this document is to 1) expose the general public on the importance of citizen science and 2) provide an analysis primer on how to look at the data for the Science Real Medium blow. 
+
+# data description including caveates
+
+
+
+```{r setup, include=FALSE}
+
+library(captioner)
+
+fig_nums <- captioner(prefix = "Fig.")
+fig.1_cap <- fig_nums(name = "fig_1", 
+                        caption = "2018 data, change in growth (initial weight (wt) - final wt among the two symbiotic partners alone and when added togather but grown seperately (_seperate) and when grown together in same well (_symbiosis). Cyano in symbiosis includes, endophytes, epiphytes and free living cyano.  Data incuded all pH conditions")
+
+```
+
+
+# 2018 Data import
+
+Data input
+
+Changing dates for Julian conversion. taking into account for leap years.
+modified from tutorial by Neon: https://www.neonscience.org/julian-day-conversion-r
+
+what is a Julian day - often used in ecology and climtate realted data to provide a continuous count of the days starting at January 1st each year. Each year will contain 365 days or 366 for leap years
+
+```{r, echo=FALSE}
+library(lubridate)
+library(tidyverse)
+
+
+datphen<-read.csv("Latimer_Cleaned_1.csv")
+#str(datphen)
+#dim(datphen)
+
+# From str(datphen) output see that 'date' is factor. change to 'date' class:
+
+datphen$date<- as.Date(datphen$date, "%m/%d/%y")
+#str(datphen) #to confirm class change
+
+
+#Add columns for month, year and julian day to datphen
+datphen2<-datphen %>% mutate(month = format(date, "%m"), year = format(date, "%Y"), julian = yday(date))
+
+
+#quick data checkt to confirm new columns are OK especiallu given leap years.
+datphen2 %>% group_by(year) %>% summarize(max(julian), min(julian))
+
+
+# turns out that max 366 = 2004, 2008, 2012, leap years
+
+```
+
+We can see from the data that John did not record observations daily. As a quick check, I looked at 06-27 julian days. on regular years it is 178, on leap years (2000,2004,2008,2012, etc) it is 179. That was confirmed for this one date. 
+
+```{r, echo=FALSE}
+
+#looking at big toothed aspen flowering
+
+datphen2$year<- as.numeric(datphen2$year)
+
+datphen2 %>% filter(common_name=="BIG TOOTHED ASPEN" & event=="FLOWERING") %>% ggplot(aes(y= julian, x= year)) +
+  geom_point()+
+  geom_smooth(method = lm) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=16,face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        legend.text=element_text(size=16)) +
+  labs(title = "Big toothed aspen flowering time")
+
+```
+
+
+Not many observations between 1990 and 2000. so reducing the years inlcuded to those with more data. 
+
+
+```{r, echo=FALSE}
+
+datphen2 %>% filter(year > 2000 & common_name=="BIG TOOTHED ASPEN" & event=="FLOWERING") %>% ggplot(aes(y= julian, x= year)) +
+  geom_point()+
+  geom_smooth(method = lm) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=16,face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        legend.text=element_text(size=16)) +
+  labs(title = "Big toothed aspen flowering time")
+
+
+```
+
+
+
+The trend between the two above graphs is similar. Both show a trend for earlier flowering over the years.
+
+
+now lets look at trends across plant with an adequat number of observations, say 15?
+
+```{r, echo=FALSE}
+
+# Subset of all data that includes plants that were observed for flowering.
+trash<-datphen2 %>% select(common_name, lifeform, event) %>% filter(lifeform == "PLANTS" & event =="FLOWERING") %>% group_by(common_name) %>% tally()
+
+
+#subset for those speices that have more than 15 years of flwoering observations
+trash %>% filter(n > 15)
+
+#now write a model to detrmine speices that changing there seasonal flowering time through years
+
+#something like:
+models <- usual %>%
+ group_by(date) %>%
+ do(
+ mod = lm(dep_delay ~ time, data = .)
+ ) 
+
+
+```
+
+
