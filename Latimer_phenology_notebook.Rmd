@@ -12,10 +12,10 @@ output:
 ---
 
 # Introduction
-The goal of this document is to 1) expose the general public on the importance of citizen science and 2) provide an analysis primer on how to look at the data for the Science Real Medium blow. 
+
+The ultimate goal of this tutorial is to expose the importance of community participation in science, and to empower interested persons in both the power and caveates of such datasets.
 
 # data description including caveates
-
 
 
 ```{r setup, include=FALSE}
@@ -33,10 +33,10 @@ fig.1_cap <- fig_nums(name = "fig_1",
 
 Data input
 
-Changing dates for Julian conversion. taking into account for leap years.
-modified from tutorial by Neon: https://www.neonscience.org/julian-day-conversion-r
+Changing dates for Julian conversion by taking into account for leap year.
+Code for this section is modified from Neon: https://www.neonscience.org/julian-day-conversion-r
 
-what is a Julian day - often used in ecology and climtate realted data to provide a continuous count of the days starting at January 1st each year. Each year will contain 365 days or 366 for leap years
+Julian days are often used in ecology and climtate realted science to provide a continuous count of the days starting at January 1st each year. Each year will contain 365 days or 366 days if a leap years
 
 ```{r, echo=FALSE}
 library(lubridate)
@@ -44,8 +44,8 @@ library(tidyverse)
 
 
 datphen<-read.csv("Latimer_Cleaned_1.csv")
-#str(datphen)
-#dim(datphen)
+#str(datphen) #describes data class of columns within dataframe
+#dim(datphen) #dimension of the dataframe
 
 # From str(datphen) output see that 'date' is factor. change to 'date' class:
 
@@ -61,11 +61,11 @@ datphen2<-datphen %>% mutate(month = format(date, "%m"), year = format(date, "%Y
 datphen2 %>% group_by(year) %>% summarize(max(julian), min(julian))
 
 
-# turns out that max 366 = 2004, 2008, 2012, leap years
 
 ```
 
 We can see from the data that John did not record observations daily. As a quick check, I looked at 06-27 julian days. on regular years it is 178, on leap years (2000,2004,2008,2012, etc) it is 179. That was confirmed for this one date. 
+
 
 ```{r, echo=FALSE}
 
@@ -85,7 +85,7 @@ datphen2 %>% filter(common_name=="BIG TOOTHED ASPEN" & event=="FLOWERING") %>% g
 ```
 
 
-Not many observations between 1990 and 2000. so reducing the years inlcuded to those with more data. 
+Not many observations between 1990 and 2000. To add confidence to the regression trend lets restrict the analysis to those years above 2000.
 
 
 ```{r, echo=FALSE}
@@ -103,31 +103,139 @@ datphen2 %>% filter(year > 2000 & common_name=="BIG TOOTHED ASPEN" & event=="FLO
 ```
 
 
+The trend between the two above graphs is similar, with showing a trend between flowering time and year. 
 
-The trend between the two above graphs is similar. Both show a trend for earlier flowering over the years.
+now lets look at trends across other plants, do they all show the same trend?
 
-
-now lets look at trends across plant with an adequat number of observations, say 15?
+We arbitrarily pick 15 observations at the minimum number.
 
 ```{r, echo=FALSE}
 
 # Subset of all data that includes plants that were observed for flowering.
-trash<-datphen2 %>% select(common_name, lifeform, event) %>% filter(lifeform == "PLANTS" & event =="FLOWERING") %>% group_by(common_name) %>% tally()
+a<-datphen2 %>% select(common_name, lifeform, event) %>% filter(lifeform == "PLANTS" & event =="FLOWERING") %>% group_by(common_name) %>% tally()
 
 
 #subset for those speices that have more than 15 years of flwoering observations
-trash %>% filter(n > 15)
+b<- a %>% filter(n > 15)
+c<-b %>% select(common_name)
 
-#now write a model to detrmine speices that changing there seasonal flowering time through years
+#now make a dataframe that has all observation from only the species meeting out criteron (common name in dataframe b)
 
-#something like:
-models <- usual %>%
- group_by(date) %>%
- do(
- mod = lm(dep_delay ~ time, data = .)
- ) 
+lm.data<-inner_join(c, datphen2, by = "common_name") %>% filter(event =="FLOWERING")
+
+```
+
+We can see that dataframe b has 67 rows, meaning that only 67 plant species have 15 or more observations for this analysis. 
+
+
+Now lets write code for a model that looks for regression trends among flowering and year for all plant species meeting a 15 year minimum criteron. 
+
+
+```{r, echo=FALSE}
+
+library(broom)
+
+#running the lm model across all rows, genotypes
+lm.results<- lm.data %>% group_by(common_name) %>% do(fitdata = lm(julian ~ year, data = .))
+
+#getting tidy data output from model run
+lmSlopePvalue <- tidy(lm.results, fitdata) %>% select(common_name, term, estimate, p.value) %>% filter(term =="year")
+
+lmRsquare <- glance(lm.results, fitdata) %>% select(common_name, r.squared)
+
+#tidy data output
+lmtidyoutput<-left_join(lmSlopePvalue, lmRsquare, by = c("common_name" = "common_name"))
+
+# lm model parameter distributions
+
+par(mfrow=c(1,3))
+hist(lmtidyoutput$estimate, main = "lm slope")
+hist(lmtidyoutput$p.value, main = "P value")
+hist(lmtidyoutput$r.squared, main = "r2")
 
 
 ```
+
+
+
+```{r}
+par(mfrow=c(1,3))
+plot(lmtidyoutput$p.value, lmtidyoutput$estimate, main = "p.value to slope")
+plot(lmtidyoutput$r.squared, lmtidyoutput$estimate, main = "r.squared to slope")
+plot(lmtidyoutput$p.value, lmtidyoutput$r.squared, main = "p.value to r.squared")
+```
+
+
+```{r}
+
+#now lets graph the data and see what it looks like
+#select the p.value cutoff
+
+trash<-lmtidyoutput %>% filter(p.value <=0.05) %>% select(common_name)
+
+trash2<-left_join(trash, datphen2, by = c("common_name" = "common_name"))
+
+ggplot(trash2, aes(y= julian, x= year, colour = common_name, group = common_name)) +
+  geom_point()+
+  geom_quantile() +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=16,face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        legend.text=element_text(size=16)) 
+
+#determine how many species meet our criteria
+
+
+     
+
+trash3<-trash2 %>% filter(event == "FLOWERING")
+    
+
+## start of plotting function
+
+plant.species <- function(df, na.rm = TRUE, ...){
+  
+  # create list of counties in data to loop over 
+  plant_list <- unique(df$common_name)
+  
+  # create for loop to produce ggplot2 graphs 
+  for (i in seq_along(plant_list)) { 
+    
+    # create plot for each county in df 
+    plot <- 
+      ggplot(subset(df, df$common_name==plant_list[i]),
+        aes(y= julian, x= year, group = common_name)) + 
+        geom_point()+
+        geom_smooth(method = lm) +
+        theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=16,face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        legend.text=element_text(size=16)) +
+        ggtitle(paste(plant_list[i]))
+    
+    # save plots as .png
+    # ggsave(plot, file=paste(results, 
+    #                        'projection_graphs/county_graphs/',
+    #                        plant_list[i], ".png", sep=''), scale=2)
+   
+    # save plots as .pdf
+    # ggsave(plot, file=paste(results, 
+    #                        'projection_graphs/county_graphs/',
+    #                        plant_list[i], ".pdf", sep=''), scale=2)
+    
+    # print plots to screen
+    print(plot)
+  }
+}
+
+# run graphing function on long df
+plant.species(trash3)
+
+```
+
+
+
+
+
 
 
