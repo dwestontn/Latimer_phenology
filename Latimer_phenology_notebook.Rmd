@@ -80,7 +80,7 @@ datphen2 %>% filter(common_name=="BIG TOOTHED ASPEN" & event=="FLOWERING") %>% g
         axis.title=element_text(size=16,face="bold"),
         axis.text.x = element_text(angle = 90, vjust = 0.5),
         legend.text=element_text(size=16)) +
-  labs(title = "Big toothed aspen flowering time")
+  labs(title = "Date of Big Toothed Aspen first flower", x = "Year", y = "Julian Calendar Day")
 
 ```
 
@@ -97,7 +97,7 @@ datphen2 %>% filter(year > 2000 & common_name=="BIG TOOTHED ASPEN" & event=="FLO
         axis.title=element_text(size=16,face="bold"),
         axis.text.x = element_text(angle = 90, vjust = 0.5),
         legend.text=element_text(size=16)) +
-  labs(title = "Big toothed aspen flowering time")
+  labs(title = "Date of Big Toothed Aspen fist flower", x = "Year", y = "Julian Calendar Day")
 
 
 ```
@@ -233,6 +233,45 @@ plant.species(trash3)
 
 ```
 
+
+A closer look at False Solomon Seal
+
+```{r}
+datphen2 %>% filter(common_name=="FALSE SOLOMON SEAL" & event=="FLOWERING") %>% ggplot(aes(y= julian, x= year)) +
+  geom_point()+
+  geom_smooth(method = lm) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=16,face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        legend.text=element_text(size=16)) +
+  labs(title = "Date of False Somolon's Seal first flower", x = "Year", y = "Julian Calendar Day")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+looking at the birds -- are htere any trends there?
+
+
+```{r}
+datphen2 %>% filter(common_name=="DARK EYED JUNCO" & event=="FIRST SEEN") %>% ggplot(aes(y= julian, x= year)) +
+  geom_point()+
+  geom_smooth(method = lm) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=16,face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        legend.text=element_text(size=16)) +
+        scale_y_continuous(limits = c(0, 200)) +
+  labs(title = "Date when Dark Eyed Junco was first seen", x = "Year", y = "Julian Calendar Day")
+```
 
 
 
