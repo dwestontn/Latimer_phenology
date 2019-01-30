@@ -1,6 +1,6 @@
 ---
 title: "Latimer_phenology_notebook"
-author: "Data collected by John Latimer<br/>data annotated by xxxxx <br/> code contributions by David J. Weston<br/>Travis Lawrence"
+author: "Data collected by John Latimer<br/>data annotated by Claudia Nanninga <br/> code written by David J. Weston<br/>Travis Lawrence"
 date: "12/01/2018"
 output:
   html_document:
@@ -13,11 +13,10 @@ output:
 
 # Introduction
 
-The goal of this tutorial is to intorduce the public to the importance of community science, along with its inherent limitations. 
+The goal of this R notebook tutorial is to intorduce the public to the importance of community science along with its inherent limitations. 
 
-We are using a dataset collected by John Latimer for over 30 years. The data is publically available and the specific data used for this tutorial is available at GITHUB address......
+We are using a dataset collected by community scientist John Latimer for over 32 years. Data were meticulously curated by Claudia Nanninga. These data are publically available along with introductory ananlysis code at https://github.com/dwestontn/Latimer_phenology. See Medium blog TK###### for further insights.
 
-# data description including caveates
 
 ```{r setup, include=FALSE}
 
@@ -33,11 +32,9 @@ fig.1_cap <- fig_nums(name = "fig_1",
 # 2018 Data import and initials glimpse
 
 
-The origianl data provided by Latimer is a typical date format. However, ecolgoists and climate scientist often use Julian day format to provide a continuous count of the days starting at January 1st each year. Each year will contain 365 days or 366 days if a leap years
+The origianl data provided by Latimer is in typical date format. However, ecolgists and climate scientist often use Julian day format to provide a continuous count of the days starting at January 1st each year. Each year will contain 365 days or 366 days if a leap years
 
-Code for changing the date format to the Julian day format is modified from the Neon site: https://www.neonscience.org/julian-day-conversion-r
-
-this code nicely accounts for leap years. 
+Code for changing the date format to the Julian day format was modified from the Neon site: https://www.neonscience.org/julian-day-conversion-r
 
 
 ```{r, echo=FALSE, message=FALSE}
@@ -53,16 +50,25 @@ datphen<-read.csv("Latimer_Cleaned_1.csv")
 datphen$date<- as.Date(datphen$date, "%m/%d/%y")
 #str(datphen) #to confirm class change
 
+head(datphen)
+
+
+```
+
+The data are impressive! Over a 32 year span, Latimer manually collected 10,484 phenology observations. Along with the date recorded, Latimer and Nanninga added 9 other vairable (e.g., genus, species, common name, lifeform, etc.) for a total of 104,840 total observations. This is just the start, our dataset stops at 2016 while latimer continues to record phenology observations. 
+
+
+```{r, echo=FALSE, message=FALSE}
 
 #Add columns for month, year and julian day to datphen
 datphen2<-datphen %>% mutate(month = format(date, "%m"), year = format(date, "%Y"), julian = yday(date))
 
 #quick data checkt to confirm new columns are OK especiallu given leap years.
 datphen2 %>% group_by(year) %>% summarize(max(julian), min(julian))
-
 ```
 
-We can see from the data that John did not record observations daily. However, the data provided span 1984 to 2016 for 32 years of observations!
+
+We can see from the above partial table that Latimer did not record observations daily. This makes sense as plants are dormant in the winter and many birds migrate.
 
 As a quick check on the Julian day conversion, I looked at 06-27 julian days. on regular years it is 178, on leap years (2000,2004,2008,2012, etc) it is 179. That was confirmed for this one date. 
 
@@ -75,11 +81,9 @@ datphen2 %>% select(common_name, lifeform, event) %>% filter(lifeform == "PLANTS
 
 ```
 
-From the data, we see that there are 392 plants that were observed over the years. However, many have a sparse number of observations that are difficult to build models for. 
+From the above table, we see that there are 392 plants that were observed over the years. However, many have a sparse number of observations that are difficult to build models for. 
 
 Here is a look at the data distribution
-
-
 
 ```{r, echo=FALSE, message=FALSE}
 
@@ -102,8 +106,7 @@ a<-datphen2 %>% select(common_name, lifeform, event) %>% filter(lifeform == "PLA
 We can see from the histogram that the majority of data are sparse indeed, with less than 10 observations. 
 
 
-If we subset the data to those plants that have at least 15 or more observations, we still get 76 plant speices (see code below). this is a considerable number of plants for for trends in phenology. To interrogate the data further, lets restrict the phenology traits to flowering time only, and tidy the data up for recursive model fitting.
-
+If we subset the data to those plants that have at least 15 or more observations, we still get 76 plant speices (see code below). this is a considerable number of plants for trends in phenology at one location. To interrogate the data further, lets restrict the phenology traits to flowering time only, and tidy the data for recursive linear model fitting.
 
 
 ```{r, echo=FALSE, message=FALSE}
@@ -121,7 +124,7 @@ lm.data$year<-as.numeric(lm.data$year)
 
 ```
 
-Now that the data are tidy (in a format to easily compute on), lets run a linear model across all 76 species through the 32 years of data. Further, lets extract the model slope and p.value to identify candidate species for further investigation on flowing time correlations with year. 
+Now that the data are tidy (in a format to easily compute on), lets run a linear model across all 76 species through the 32 years of data. Further, lets extract the model slope and P - value to identify candidate species for further investigation on flowing time correlations with time of year. 
 
 ```{r, echo=FALSE, message=FALSE}
 
@@ -149,7 +152,7 @@ hist(lmtidyoutput$r.squared, main = "r2")
 ```
 
 
-The above histograms show distirbutions of linear model paramters, 
+The above histograms show distirbutions of linear model paramters. 
 
 
 ```{r, echo=FALSE, message=FALSE}
@@ -160,22 +163,10 @@ plot(lmtidyoutput$p.value, lmtidyoutput$r.squared, main = "p.value to r.squared"
 ```
 
 
+The above scatterplots show the relationships for linear model paramters to each other. 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+The linear model output indicates that changes flowering day for Big Toothed Aspen is associated with year observed. To look at the relationship further, lets plot year by Julian day for first observed flowering of Big Toothed Aspen.
 
 ```{r, echo=FALSE, message=FALSE}
 
@@ -195,10 +186,10 @@ datphen2 %>% filter(common_name=="BIG TOOTHED ASPEN" & event=="FLOWERING") %>% g
 ```
 
 
-Not many observations between 1990 and 2000. To add confidence to the regression trend lets restrict the analysis to those years above 2000.
+Notice that there are not many observations between 1990 and 2000. To add confidence to the regression trend lets restrict the analysis to those years above 2000.
 
 
-```{r, echo=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 
 datphen2 %>% filter(year > 2000 & common_name=="BIG TOOTHED ASPEN" & event=="FLOWERING") %>% ggplot(aes(y= julian, x= year)) +
   geom_point()+
@@ -213,11 +204,11 @@ datphen2 %>% filter(year > 2000 & common_name=="BIG TOOTHED ASPEN" & event=="FLO
 ```
 
 
-The trend between the two above graphs is similar, with trends showing a decrase in flowering time by year. 
+The trend between the two above graphs is similar, suggesting that Big Toothed Aspen is pregressively flowering earlier in the season. 
 
 now lets look at trends across other plants, do they all show the same trend?
 
-We arbitrarily pick 15 observations at the minimum number.
+
 
 ```{r, echo=FALSE, message=FALSE}
 
@@ -235,42 +226,7 @@ lm.data<-inner_join(c, datphen2, by = "common_name") %>% filter(event =="FLOWERI
 We can see that dataframe b has 67 rows, meaning that only 67 plant species have 15 or more observations for this analysis. 
 
 
-Now lets write code for a model that looks for regression trends among flowering and year for all plant species meeting a 15 year minimum criteron. 
-
-
-```{r, echo=FALSE, message=FALSE}
-
-library(broom)
-
-#running the lm model across all rows, genotypes
-lm.results<- lm.data %>% group_by(common_name) %>% do(fitdata = lm(julian ~ year, data = .))
-
-#getting tidy data output from model run
-lmSlopePvalue <- tidy(lm.results, fitdata) %>% select(common_name, term, estimate, p.value) %>% filter(term =="year")
-
-lmRsquare <- glance(lm.results, fitdata) %>% select(common_name, r.squared)
-
-#tidy data output
-lmtidyoutput<-left_join(lmSlopePvalue, lmRsquare, by = c("common_name" = "common_name"))
-
-# lm model parameter distributions
-
-par(mfrow=c(1,3))
-hist(lmtidyoutput$estimate, main = "lm slope")
-hist(lmtidyoutput$p.value, main = "P value")
-hist(lmtidyoutput$r.squared, main = "r2")
-
-
-```
-
-
-
-```{r, echo=FALSE, message=FALSE}
-par(mfrow=c(1,3))
-plot(lmtidyoutput$p.value, lmtidyoutput$estimate, main = "p.value to slope")
-plot(lmtidyoutput$r.squared, lmtidyoutput$estimate, main = "r.squared to slope")
-plot(lmtidyoutput$p.value, lmtidyoutput$r.squared, main = "p.value to r.squared")
-```
+Now lets write code for a model that looks for regression trends among flowering day and year for all plant species meeting a 15 year minimum criteron. 
 
 
 ```{r, echo=FALSE, message=FALSE}
@@ -292,12 +248,8 @@ ggplot(trash2, aes(y= julian, x= year, colour = common_name, group = common_name
 
 #determine how many species meet our criteria
 
-
-     
-
 trash3<-trash2 %>% filter(event == "FLOWERING")
     
-
 ## start of plotting function
 
 plant.species <- function(df, na.rm = TRUE, ...){
@@ -340,27 +292,10 @@ plant.species(trash3)
 
 ```
 
-
-A closer look at False Solomon Seal
-
-```{r, echo=FALSE, message=FALSE}
-
-datphen2 %>% filter(common_name=="FALSE SOLOMON SEAL" & event=="FLOWERING") %>% ggplot(aes(y= julian, x= year)) +
-  geom_point(size=4, colour = "dark blue")+
-  geom_smooth(method = lm) +
-  theme(axis.text=element_text(size=18),
-        axis.title=element_text(size=20,face="bold"),
-        plot.title = element_text(size=20, face = "bold"),
-        axis.text.x = element_text(angle = 90, vjust = 0.5),
-        legend.text=element_text(size=20)) +
-  labs(title = "Date of False Somolon's Seal observed first flower", x = "Year", y = "Julian Calendar Day")
+The graphs show some interesting trends, some species seem to flower earlier in the year - like Big Toothed Aspen, while others may be flowering later in the year. See False Solomon's Seal as an example. To really have confidence in these trends, one would need to determine that linear model assumptions are met. please refer to TKXXXXXX.....
 
 
-```
-
-
-
-Using the code above you can explore the Latimer bird data in a similar way. If you do so, you will notice the bird data is much more sparse than than the plant. Suggesting that Latimer was more interested in observing plant phenology than bird phenology. Below is an example graph chosen because of numerous observations (abundant data) and seeminly non-responive trend. An informed public must keep in mind that graphs showing showing exagerated trends may not be the norm, indeed the DarK Eyed Junco seems to be non-responsive to year observed - see below
+Using the above code one can explore the Latimer bird data in a similar way. If you do so, you will notice that the bird data is much more sparse than the plant data. Suggesting that Latimer was more interested in observing plant phenology than bird phenology. Below is an example graph chosen because of numerous observations (abundant data) that exhibit a seeminly non-responive trend. An informed public must keep in mind that graphs showing exagerated trends may not be the norm, indeed the DarK Eyed Junco seems to be non-responsive to year observed - see below
 
 
 ```{r, echo=FALSE, message=FALSE}
