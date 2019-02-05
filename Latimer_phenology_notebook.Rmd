@@ -195,11 +195,11 @@ The linear model output indicates that changes in flowering day for Big Toothed 
 datphen2$year<- as.numeric(datphen2$year)
 
 datphen2 %>% filter(common_name=="BIG TOOTHED ASPEN" & event=="FLOWERING") %>% ggplot(aes(y= julian, x= year)) +
-  geom_point()+
+  geom_point(size=4, colour = "dark blue")+
   geom_smooth(method = lm) +
-  theme(axis.text=element_text(size=12),
+  theme(axis.text=element_text(size=12, face = "bold"),
         axis.title=element_text(size=16,face="bold"),
-        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, face = "bold"),
         legend.text=element_text(size=16)) +
   labs(title = "Date of Big Toothed Aspen observed first flower", x = "Year", y = "Julian Calendar Day")
 
