@@ -85,7 +85,7 @@ datphen2 %>% group_by(year) %>% summarize(max(julian), min(julian))
 ```
 
 
-We can see from the above partial table that Latimer did not record observations daily. This makes sense as plants are dormant in the winter and many birds migrate.
+We can see from the above partial table that Latimer did not record observations daily. This makes sense as plants are dormant in the winter and birds seasonally migrate.
 
 As a quick check on the Julian day conversion, I looked at 06-27 Julian days. on regular years it is 178, on leap years (2000,2004,2008,2012, etc) it is 179. That was confirmed for this one date. 
 
@@ -96,6 +96,7 @@ Now lets get a feel for the data, especially in regard to plants.
 # Subset of all data that includes plants that were observed for flowering.
 datphen2 %>% select(common_name, lifeform, event) %>% filter(lifeform == "PLANTS" & event =="FLOWERING") %>% group_by(common_name) %>% tally() %>% arrange(-n)
 
+trash<-datphen2 %>% select(common_name, lifeform, event) %>% filter(lifeform == "PLANTS" & event =="FLOWERING") %>% group_by(common_name) %>% tally() %>% arrange(-n)
 ```
 
 From the above table, we see that there are 392 plants that were observed over the years. However, many have a sparse number of observations that are difficult to build models for. 
@@ -284,47 +285,14 @@ sig.lmoutput.3<-sig.lmoutput.2 %>% filter(event == "FLOWERING")
     
 ## start of plotting function
 
-plant.species <- function(df, na.rm = TRUE, ...){
-  
-  # create list of counties in data to loop over 
-  plant_list <- unique(df$common_name)
-  
-  # create for loop to produce ggplot2 graphs 
-  for (i in seq_along(plant_list)) { 
-    
-    # create plot for each county in df 
-    plot <- 
-      ggplot(subset(df, df$common_name==plant_list[i]),
-        aes(y= julian, x= year, group = common_name)) + 
-        geom_point(size=4, colour = "dark blue")+
-        geom_smooth(method = lm) +
-        theme(axis.text=element_text(size=12),
-        axis.title=element_text(size=16,face="bold"),
-        axis.text.x = element_text(angle = 90, vjust = 0.5),
-        legend.text=element_text(size=16)) +
-        ggtitle(paste(plant_list[i]))
-    
-    # save plots as .png
-    # ggsave(plot, file=paste(results, 
-    #                        'projection_graphs/county_graphs/',
-    #                        plant_list[i], ".png", sep=''), scale=2)
-   
-    # save plots as .pdf
-    # ggsave(plot, file=paste(results, 
-    #                        'projection_graphs/county_graphs/',
-    #                        plant_list[i], ".pdf", sep=''), scale=2)
-    
-    # print plots to screen
-    print(plot)
-  }
-}
+ 
 
 # run graphing function on long df
 plant.species(sig.lmoutput.3)
 
 ```
 
-The graphs show some interesting trends, some species seem to flower earlier in the year - like Big Toothed Aspen, while others may be flowering later in the year. See False Solomon's Seal as an example. To really have confidence in these trends, one would need to determine that linear model assumptions are met. please refer to TKXXXXXX.....
+The graphs show some interesting trends, some species seem to flower earlier in the year - like Big Toothed Aspen, while others may be flowering later in the year. See False Solomon's Seal as an example. To really have confidence in these trends, one would need to determine that linear model assumptions are met. 
 
 
 Using the above code one can explore the Latimer bird data in a similar way. If you do so, you will notice that the bird data is much more sparse than the plant data. Suggesting that Latimer was more interested in observing plant phenology than bird phenology. Below is an example graph chosen because of numerous observations (abundant data) that exhibit a seemingly non-responsive trend. An informed public must keep in mind that graphs showing exaggerated trends may not be the norm, indeed the Dark Eyed Junco seems to be non-responsive to year observed - see below
