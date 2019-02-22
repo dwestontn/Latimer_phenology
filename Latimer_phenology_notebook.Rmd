@@ -285,7 +285,25 @@ sig.lmoutput.3<-sig.lmoutput.2 %>% filter(event == "FLOWERING")
     
 ## start of plotting function
 
- 
+ plant.species <- function(df, na.rm = TRUE, ...) {
+  # create list to loop over 
+  plant_list <- unique(df$common_name)
+  # create for loop to produce ggplot2 graphs 
+  for (i in seq_along(plant_list)) { 
+    # create plot for each specis in df 
+    plot <- 
+      ggplot(subset(df, df$common_name==plant_list[i]),
+        aes(y= julian, x= year, group = common_name)) + 
+        geom_point(size=4, colour = "dark blue")+
+        geom_smooth(method = lm) +
+        theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=16,face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        legend.text=element_text(size=16)) +
+        ggtitle(paste(plant_list[i]))
+    print(plot)
+  }
+}
 
 # run graphing function on long df
 plant.species(sig.lmoutput.3)

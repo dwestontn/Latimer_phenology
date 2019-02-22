@@ -35,8 +35,6 @@ vignettes/*.pdf
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
 
-#data file
-Latimer_Cleaned_1.csv
 
 #powerpoint for figure in medium
 latimer_medium_fig.png
